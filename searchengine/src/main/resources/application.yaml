@@ -9,15 +9,28 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
-        ddl-auto: update
-      show-sql: true
+    hibernate:
+        ddl-auto: create-drop
+    show-sql: false
 
 
 indexing-settings:
-  sites:
-    - url: https://www.lenta.ru
-      name: Лента.ру
-    - url: https://www.skillbox.ru
+  siteConfigs:
+#    - url: https://www.lenta.ru
+#      name: Лента.ру
+    - url: https://skillbox.ru
       name: Skillbox
     - url: https://www.playback.ru
       name: PlayBack.Ru
+    - url: https://nikoartgallery.com
+      name: nikoartgallery
+#    - url: https://lenta.ru
+#      name: lenta.ru
+
+
+jsoup-connection-properties:
+  userAgent: "Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6"
+  referer: "http://www.google.com"
+
+
+wrong-types: pdf,jpeg,jpg,xml,png
