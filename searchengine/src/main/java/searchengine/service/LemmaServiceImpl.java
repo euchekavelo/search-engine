@@ -3,7 +3,6 @@ package searchengine.service;
 import lombok.RequiredArgsConstructor;
 import org.apache.lucene.morphology.LuceneMorphology;
 import org.jsoup.Jsoup;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import searchengine.model.Index;
 import searchengine.model.Lemma;
@@ -57,8 +56,32 @@ public class LemmaServiceImpl implements LemmaService {
         return updatedLemma;
     }
 
-    private String cleanHtml(String html) {
-        return Jsoup.parse(html).text();
+    @Override
+    public void saveLemmasAndIndexes(String text, Site site, Page page) {
+        HashMap<String, Integer> quantityLemmasInTheText = getQuantityLemmasInTheText(text);
+
+        List<Index> indexList = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : quantityLemmasInTheText.entrySet()) {
+            Lemma lemma = createOrUpdateLemma(entry.getKey(), site);
+
+            Index index = new Index();
+            index.setLemma(lemma);
+            index.setPage(page);
+            index.setRank(Double.valueOf(entry.getValue()));
+            indexList.add(index);
+        }
+
+        indexRepository.saveAll(indexList);
+    }
+
+    @Override
+    public void deleteLemmaByIdIn(List<Integer> listIdentifiers) {
+        lemmaRepository.deleteLemmaByIdIn(listIdentifiers);
+    }
+
+    @Override
+    public void deleteLemmaIndexesByIds(List<Integer> indexList) {
+        indexRepository.deleteIndexByIdIn(indexList);
     }
 
     @Override
@@ -67,8 +90,13 @@ public class LemmaServiceImpl implements LemmaService {
     }
 
     @Override
-    public void deleteLemmaByIdIn(List<Integer> listIdentifiers) {
-        lemmaRepository.deleteLemmaByIdIn(listIdentifiers);
+    public void deleteAll() {
+        indexRepository.deleteAll();
+        lemmaRepository.deleteAll();
+    }
+
+    private String cleanHtml(String html) {
+        return Jsoup.parse(html).text();
     }
 
     private void addLemmasToTheCollection(String word, HashMap<String, Integer> lemmaStatistics,

@@ -13,7 +13,6 @@ import java.util.Optional;
 @Repository
 public interface SiteRepository extends JpaRepository<Site, Integer> {
 
-    @Transactional
     void deleteByUrl(String url);
     Optional<Site> findSiteEntityByIdAndStatus(Integer id, Status status);
     Optional<Site> findSiteByUrl(String url);
