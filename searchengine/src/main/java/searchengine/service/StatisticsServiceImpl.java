@@ -8,7 +8,11 @@ import searchengine.dto.statistics.DetailedStatisticsItem;
 import searchengine.dto.statistics.StatisticsData;
 import searchengine.dto.statistics.StatisticsResponse;
 import searchengine.dto.statistics.TotalStatistics;
+import searchengine.model.Site;
+import searchengine.repository.SiteRepository;
 
+import java.time.ZoneId;
+import java.time.temporal.TemporalField;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -17,40 +21,30 @@ import java.util.Random;
 @RequiredArgsConstructor
 public class StatisticsServiceImpl implements StatisticsService {
 
-    private final Random random = new Random();
-    private final SitesListConfig sites;
+    private final SiteRepository siteRepository;
 
     @Override
     public StatisticsResponse getStatistics() {
-        String[] statuses = { "INDEXED", "FAILED", "INDEXING" };
-        String[] errors = {
-                "Ошибка индексации: главная страница сайта не доступна",
-                "Ошибка индексации: сайт не доступен",
-                ""
-        };
+        List<Site> siteList = siteRepository.findAll();
 
         TotalStatistics total = new TotalStatistics();
-        total.setSites(sites.getSiteConfigs().size());
+        total.setSites(siteList.size());
         total.setIndexing(true);
-
         List<DetailedStatisticsItem> detailed = new ArrayList<>();
-        List<SiteConfig> sitesList = sites.getSiteConfigs();
-        for(int i = 0; i < sitesList.size(); i++) {
-            SiteConfig siteConfig = sitesList.get(i);
-            DetailedStatisticsItem item = new DetailedStatisticsItem();
-            item.setName(siteConfig.getName());
-            item.setUrl(siteConfig.getUrl());
-            int pages = random.nextInt(1_000);
-            int lemmas = pages * random.nextInt(1_000);
-            item.setPages(pages);
-            item.setLemmas(lemmas);
-            item.setStatus(statuses[i % 3]);
-            item.setError(errors[i % 3]);
-            item.setStatusTime(System.currentTimeMillis() -
-                    (random.nextInt(10_000)));
-            total.setPages(total.getPages() + pages);
-            total.setLemmas(total.getLemmas() + lemmas);
-            detailed.add(item);
+        for (Site site : siteList) {
+            DetailedStatisticsItem detailedStatisticsItem = new DetailedStatisticsItem();
+            detailedStatisticsItem.setStatus(site.getStatus().toString());
+            detailedStatisticsItem.setName(site.getName());
+            detailedStatisticsItem.setUrl(site.getUrl());
+            detailedStatisticsItem.setError(site.getLastError());
+            detailedStatisticsItem.setStatusTime(site.getStatusTime().atZone(ZoneId.systemDefault())
+                    .toInstant().toEpochMilli());
+            detailedStatisticsItem.setPages(site.getPageEntities().size());
+            detailedStatisticsItem.setLemmas(site.getLemmaEntities().size());
+
+            total.setPages(total.getPages() + site.getPageEntities().size());
+            total.setLemmas(total.getLemmas() + site.getLemmaEntities().size());
+            detailed.add(detailedStatisticsItem);
         }
 
         StatisticsResponse response = new StatisticsResponse();

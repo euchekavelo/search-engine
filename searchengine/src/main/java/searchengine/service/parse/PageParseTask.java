@@ -6,13 +6,15 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.context.ApplicationContext;
+import org.springframework.transaction.annotation.Transactional;
 import searchengine.config.ConnectionProperties;
 import searchengine.dto.UrlInfoDto;
 import searchengine.model.Page;
 import searchengine.model.Site;
 import searchengine.model.enums.Status;
-import searchengine.repository.PageRepository;
 import searchengine.repository.SiteRepository;
+import searchengine.service.LemmaService;
+import searchengine.service.PageService;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -25,14 +27,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PageParseTask extends RecursiveAction {
 
+    private static volatile boolean stopFlag;
     private static ApplicationContext applicationContext;
     private final String url;
     private final Object object = 1;
     private String shortUrl;
     private static SiteRepository siteRepository;
-    private static PageRepository pageRepository;
-    private static String referer;
-    private static String userAgent;
+    private static PageService pageService;
+    private static LemmaService lemmaService;
     private static List<String> wrongTypes;
     private final Set<PageParseTask> setChildTasks = new HashSet<>();
     private static final InheritableThreadLocal<AtomicBoolean> isInterrupt = new InheritableThreadLocal<>();
@@ -44,12 +46,20 @@ public class PageParseTask extends RecursiveAction {
         url = site.getUrl();
         shortUrl = "/";
         globalPage.set(url);
-        PageParseTask.siteRepository = applicationContext.getBean(SiteRepository.class);
-        PageParseTask.pageRepository = applicationContext.getBean(PageRepository.class);
-        PageParseTask.userAgent = applicationContext.getBean(ConnectionProperties.class).getUserAgent();
-        PageParseTask.referer = applicationContext.getBean(ConnectionProperties.class).getReferer();
+        siteRepository = applicationContext.getBean(SiteRepository.class);
+        pageService = applicationContext.getBean(PageService.class);
+        lemmaService = applicationContext.getBean(LemmaService.class);
         PageParseTask.wrongTypes = wrongTypes;
-        isInterrupt.set(new AtomicBoolean(false));
+        PageParseTask.isInterrupt.set(new AtomicBoolean(false));
+        stopFlag = false;
+    }
+
+    public static void setStopFlag(boolean flag) {
+        PageParseTask.stopFlag = flag;
+    }
+
+    public static boolean getStopFlag() {
+        return stopFlag;
     }
 
     public static void setApplicationContext(ApplicationContext applicationContext) {
@@ -66,7 +76,7 @@ public class PageParseTask extends RecursiveAction {
 
     @Override
     protected void compute() {
-        if (isInterrupt.get().get()) {
+        if (stopFlag || isInterrupt.get().get()) {
             return;
         }
 
@@ -81,16 +91,21 @@ public class PageParseTask extends RecursiveAction {
 
     private void getUniqueUrlData() {
         Site site = siteEntityThread.get();
-        Optional<Page> optionalPageEntity = pageRepository.findPageByPathAndSite(shortUrl, site);
+        Optional<Page> optionalPageEntity = pageService.getPageByPathAndSite(shortUrl, site);
         if (optionalPageEntity.isPresent()) {
             return;
         }
 
         try {
-            UrlInfoDto urlInfoDto = getUrlInfoDto(url);
+            UrlInfoDto urlInfoDto = pageService.getUrlInfoDto(url);
+            int codeStatus = urlInfoDto.getCodeStatus();
+            if (codeStatus >= 400 && codeStatus <= 599) {
+                return;
+            }
             Document document = urlInfoDto.getDocument();
             if (document != null) {
-                savePageEntity(site, shortUrl, urlInfoDto);
+                Page page = savePageEntityAndUpdateSiteStatusTime(site, shortUrl, urlInfoDto);
+                lemmaService.saveLemmasAndIndexes(urlInfoDto.getDocument().html(), site, page);
                 Elements elements = document.select("a");
                 fillSetChildTasks(setChildTasks, elements);
             }
@@ -100,7 +115,7 @@ public class PageParseTask extends RecursiveAction {
     }
 
     private void fixIndexingError(Site site, IOException ex) {
-        site.setLastError("Ошибка индексации: " + ex.getMessage());
+        site.setLastError("Ошибка индексации: " + ex.getMessage() + " - " + url);
         site.setStatus(Status.FAILED);
         siteRepository.save(site);
 
@@ -123,35 +138,17 @@ public class PageParseTask extends RecursiveAction {
         }
     }
 
-    private void savePageEntity(Site site, String link, UrlInfoDto urlInfoDto) {
-        Page page = new Page();
-        page.setCode(urlInfoDto.getCodeStatus());
-        page.setSite(site);
-        page.setPath(link);
-        page.setContent(urlInfoDto.getDocument().html());
-        pageRepository.save(page);
-
+    private Page savePageEntityAndUpdateSiteStatusTime(Site site, String link, UrlInfoDto urlInfoDto) {
+        Page page = pageService.savePageEntity(site, link, urlInfoDto);
         site.setStatusTime(LocalDateTime.now());
         siteRepository.save(site);
+
+        return page;
     }
 
     private boolean isCorrectLink(String link) {
         return !link.isEmpty() && link.startsWith(globalPage.get())
                 && !link.contains("#") && !link.contains("@")
                 && !wrongTypes.contains(link.substring(link.lastIndexOf(".") + 1));
-    }
-
-    private UrlInfoDto getUrlInfoDto(String url) throws IOException {
-        UrlInfoDto urlInfoDto = new UrlInfoDto();
-        Connection.Response response = Jsoup.connect(url)
-                .userAgent(userAgent)
-                .referrer(referer)
-                .ignoreHttpErrors(true)
-                .execute();
-
-        urlInfoDto.setCodeStatus(response.statusCode());
-        urlInfoDto.setDocument(response.parse());
-
-        return urlInfoDto;
     }
 }

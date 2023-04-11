@@ -15,7 +15,5 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
 
     Optional<Page> findPageByPathAndSite(String path, Site site);
 
-    @Transactional
-    @Modifying
-    void deletePageByPath(String path);
+    void deletePageByPathAndSite(String path, Site site);
 }

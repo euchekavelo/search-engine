@@ -18,12 +18,12 @@ indexing-settings:
   siteConfigs:
 #    - url: https://www.lenta.ru
 #      name: Лента.ру
-    - url: https://skillbox.ru
-      name: Skillbox
+#    - url: https://skillbox.ru
+#      name: Skillbox
     - url: https://www.playback.ru
       name: PlayBack.Ru
-    - url: https://nikoartgallery.com
-      name: nikoartgallery
+    - url: https://www.lutherancathedral.ru
+      name: lutherancathedral
 #    - url: https://lenta.ru
 #      name: lenta.ru
 
@@ -33,4 +33,4 @@ jsoup-connection-properties:
   referer: "http://www.google.com"
 
 
-wrong-types: pdf,jpeg,jpg,xml,png
+wrong-types: pdf,jpeg,jpg,xml,png,eps,xlsx,doc
