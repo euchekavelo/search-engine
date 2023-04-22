@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.springframework.stereotype.Service;
-import searchengine.config.ConnectionProperties;
+import searchengine.config.ConnectionPropertiesConfig;
 import searchengine.dto.UrlInfoDto;
 import searchengine.model.Page;
 import searchengine.model.Site;
@@ -18,7 +18,7 @@ import java.util.Optional;
 public class PageServiceImpl implements PageService {
 
     private final PageRepository pageRepository;
-    private final ConnectionProperties connectionProperties;
+    private final ConnectionPropertiesConfig connectionPropertiesConfig;
 
     @Override
     public Page savePageEntity(Site site, String link, UrlInfoDto urlInfoDto) {
@@ -36,8 +36,8 @@ public class PageServiceImpl implements PageService {
     public UrlInfoDto getUrlInfoDto(String url) throws IOException {
         UrlInfoDto urlInfoDto = new UrlInfoDto();
         Connection.Response response = Jsoup.connect(url)
-                .userAgent(connectionProperties.getUserAgent())
-                .referrer(connectionProperties.getReferer())
+                .userAgent(connectionPropertiesConfig.getUserAgent())
+                .referrer(connectionPropertiesConfig.getReferer())
                 .ignoreHttpErrors(true)
                 .execute();
 

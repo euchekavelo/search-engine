@@ -22,8 +22,8 @@ indexing-settings:
 #      name: Skillbox
     - url: https://www.playback.ru
       name: PlayBack.Ru
-    - url: https://www.lutherancathedral.ru
-      name: lutherancathedral
+    - url: https://pcworkshop.ru
+      name: pcworkshop
 #    - url: https://lenta.ru
 #      name: lenta.ru
 

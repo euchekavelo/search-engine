@@ -21,5 +21,5 @@ public interface LemmaService {
 
     void saveLemmas(List<Lemma> lemmaList);
 
-    void deleteAll();
+    String cleanHtml(String html);
 }

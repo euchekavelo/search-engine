@@ -3,6 +3,10 @@ package searchengine.service;
 import lombok.RequiredArgsConstructor;
 import org.apache.lucene.morphology.LuceneMorphology;
 import org.jsoup.Jsoup;
+import org.jsoup.safety.Cleaner;
+import org.jsoup.safety.Safelist;
+import org.jsoup.safety.Whitelist;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import searchengine.model.Index;
 import searchengine.model.Lemma;
@@ -90,13 +94,9 @@ public class LemmaServiceImpl implements LemmaService {
     }
 
     @Override
-    public void deleteAll() {
-        indexRepository.deleteAll();
-        lemmaRepository.deleteAll();
-    }
-
-    private String cleanHtml(String html) {
-        return Jsoup.parse(html).text();
+    public String cleanHtml(String html) {
+        Cleaner cleaner = new Cleaner(Safelist.none());
+        return cleaner.clean(Jsoup.parse(html)).text();
     }
 
     private void addLemmasToTheCollection(String word, HashMap<String, Integer> lemmaStatistics,

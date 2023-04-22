@@ -1,13 +1,9 @@
-package searchengine.service.parse;
+package searchengine.parse;
 
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.context.ApplicationContext;
-import org.springframework.transaction.annotation.Transactional;
-import searchengine.config.ConnectionProperties;
 import searchengine.dto.UrlInfoDto;
 import searchengine.model.Page;
 import searchengine.model.Site;
@@ -77,6 +73,7 @@ public class PageParseTask extends RecursiveAction {
     @Override
     protected void compute() {
         if (stopFlag || isInterrupt.get().get()) {
+            setChildTasks.clear();
             return;
         }
 

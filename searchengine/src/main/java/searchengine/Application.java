@@ -3,7 +3,7 @@ package searchengine;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
-import searchengine.service.parse.PageParseTask;
+import searchengine.parse.PageParseTask;
 
 @SpringBootApplication
 public class Application {

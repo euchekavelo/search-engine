@@ -14,7 +14,7 @@ import searchengine.model.Page;
 import searchengine.model.Site;
 import searchengine.model.enums.Status;
 import searchengine.repository.SiteRepository;
-import searchengine.service.parse.PageParseTask;
+import searchengine.parse.PageParseTask;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
