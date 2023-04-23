@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import searchengine.dto.SearchResultsResponse;
+import searchengine.dto.search.SearchResultsResponse;
 import searchengine.dto.indexing.IndexingResponse;
 import searchengine.dto.statistics.StatisticsResponse;
 import searchengine.exception.ErrorCustomException;
@@ -53,7 +53,8 @@ public class ApiController {
     public ResponseEntity<SearchResultsResponse> search(@RequestParam("query") String query,
                                                         @RequestParam("site") String site,
                                                         @RequestParam("offset") Integer offset,
-                                                        @RequestParam("limit") Integer limit) {
+                                                        @RequestParam("limit") Integer limit)
+            throws ErrorCustomException {
 
         return ResponseEntity.ok(searchService.search(query, site, offset, limit));
     }

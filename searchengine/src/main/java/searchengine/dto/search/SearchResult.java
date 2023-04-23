@@ -1,9 +1,10 @@
-package searchengine.dto;
+package searchengine.dto.search;
 
 import lombok.Data;
 
 @Data
 public class SearchResult {
+
     private String site;
     private String siteName;
     private String uri;

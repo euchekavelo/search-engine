@@ -7,13 +7,17 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import searchengine.dto.PageRelevance;
-import searchengine.dto.SearchResult;
-import searchengine.dto.SearchResultsResponse;
+import searchengine.dto.search.SearchResult;
+import searchengine.dto.search.SearchResultsResponse;
+import searchengine.exception.ErrorCustomException;
 import searchengine.model.Index;
 import searchengine.model.Lemma;
 import searchengine.model.Page;
+import searchengine.model.Site;
+import searchengine.model.enums.Status;
 import searchengine.repository.LemmaRepository;
 import searchengine.repository.PageRepository;
+import searchengine.repository.SiteRepository;
 
 import java.util.*;
 
@@ -24,28 +28,23 @@ public class SearchServiceImpl implements SearchService {
     private final LemmaService lemmaService;
     private final LemmaRepository lemmaRepository;
     private final PageRepository pageRepository;
+    private final SiteRepository siteRepository;
     private static final int COUNT_CHARACTERS_SNIPPET = 225;
     private int countCharactersSearchQuery;
 
     @Override
-    public SearchResultsResponse search(String query, String site, Integer offset, Integer limit) {
+    public SearchResultsResponse search(String query, String site, Integer offset, Integer limit)
+            throws ErrorCustomException {
+
+        if (query.isEmpty()) {
+            throw new ErrorCustomException("Задан пустой поисковой запрос.");
+        }
+
         countCharactersSearchQuery = query.length();
         Set<String> setLemmasFromSearchQuery = lemmaService.getQuantityLemmasInTheText(query).keySet();
         int countLemmasFromSearchQuery = setLemmasFromSearchQuery.size();
 
-        List<Integer> lemmaIds;
-        if (site.equals("All sites")) {
-             lemmaIds = lemmaRepository.findLemmaByLemmaInOrderByFrequencyAsc(setLemmasFromSearchQuery)
-                    .stream()
-                    .map(Lemma::getId)
-                    .toList();;
-        } else {
-            lemmaIds = lemmaRepository.findLemmaBySite_UrlAndLemmaInOrderByFrequencyAsc(site, setLemmasFromSearchQuery)
-                            .stream()
-                            .map(Lemma::getId)
-                            .toList();
-        }
-
+        List<Integer> lemmaIds = getListOfSortedLemmaIds(site, setLemmasFromSearchQuery);
         List<Page> pageList = pageRepository.getListOfPagesByListOfLemmaIds(lemmaIds, countLemmasFromSearchQuery);
         TreeSet<PageRelevance> pageRelevanceTreeSet = performPageRelevanceCalculation(pageList);
 
@@ -53,6 +52,36 @@ public class SearchServiceImpl implements SearchService {
         List<SearchResult> partOfList = getPartOfList(offset, limit, searchResultList);
 
         return createSearchResultsResponse(partOfList, searchResultList.size());
+    }
+
+    private List<Integer> getListOfSortedLemmaIds(String site, Set<String> setLemmasFromSearchQuery)
+            throws ErrorCustomException {
+
+        List<Integer> lemmaIds;
+        List<Status> statusList = List.of(Status.INDEXED, Status.FAILED);
+        if (site.equals("All sites")) {
+            List<Site> siteList = siteRepository.findSitesByStatusNotIn(statusList);
+            if (!siteList.isEmpty()) {
+                throw new ErrorCustomException("Все сайты польностью еще не проиндексированы.");
+            }
+
+            lemmaIds = lemmaRepository.findLemmaByLemmaInOrderByFrequencyAsc(setLemmasFromSearchQuery)
+                    .stream()
+                    .map(Lemma::getId)
+                    .toList();;
+        } else {
+            Optional<Site> optionalSite = siteRepository.findSiteByUrlAndStatusIn(site, statusList);
+            if (optionalSite.isEmpty()) {
+                throw new ErrorCustomException("Указанный сайт еще полностью не проиндексирован.");
+            }
+
+            lemmaIds = lemmaRepository.findLemmaBySite_UrlAndLemmaInOrderByFrequencyAsc(site, setLemmasFromSearchQuery)
+                    .stream()
+                    .map(Lemma::getId)
+                    .toList();
+        }
+
+        return lemmaIds;
     }
 
     private List<SearchResult> formSearchResultList(TreeSet<PageRelevance> pageRelevanceTreeSet, String query) {

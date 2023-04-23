@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import searchengine.config.SiteConfig;
 import searchengine.config.SitesListConfig;
-import searchengine.dto.UrlInfoDto;
+import searchengine.dto.UrlInfo;
 import searchengine.dto.indexing.IndexingResponse;
 import searchengine.exception.ErrorCustomException;
 import searchengine.model.Lemma;
@@ -88,9 +88,9 @@ public class IndexingServiceImpl implements IndexingService {
             String shortUrl = url.replaceAll(site.getUrl(), "");
             removeIndexedPageSiteData(shortUrl, site);
 
-            UrlInfoDto urlInfoDto = pageService.getUrlInfoDto(url);
-            Page page = pageService.savePageEntity(site, shortUrl, urlInfoDto);
-            lemmaService.saveLemmasAndIndexes(urlInfoDto.getDocument().html(), site, page);
+            UrlInfo urlInfo = pageService.getUrlInfoDto(url);
+            Page page = pageService.savePageEntity(site, shortUrl, urlInfo);
+            lemmaService.saveLemmasAndIndexes(urlInfo.getDocument().html(), site, page);
 
         } catch (IOException e) {
             throw new ErrorCustomException("При попытке получения данных страницы произошла ошибка: " + e.getMessage());

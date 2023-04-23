@@ -1,6 +1,6 @@
 package searchengine.service;
 
-import searchengine.dto.UrlInfoDto;
+import searchengine.dto.UrlInfo;
 import searchengine.model.Page;
 import searchengine.model.Site;
 
@@ -9,13 +9,11 @@ import java.util.Optional;
 
 public interface PageService {
 
-    Page savePageEntity(Site site, String link, UrlInfoDto urlInfoDto);
+    Page savePageEntity(Site site, String link, UrlInfo urlInfo);
 
-    UrlInfoDto getUrlInfoDto(String url) throws IOException;
+    UrlInfo getUrlInfoDto(String url) throws IOException;
 
     void deletePageByPath(String path, Site site);
 
     Optional<Page> getPageByPathAndSite(String path, Site site);
-
-    void deleteAll();
 }

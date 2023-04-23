@@ -9,3 +9,13 @@ services:
       - MYSQL_DATABASE=search_engine
     ports:
       - '8081:3306'
+
+
+  search-engine:
+    container_name: search-engine
+    image: search-engine:latest
+    build: '.'
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:8081/search_engine?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true
+    ports:
+      - "8080:8080"

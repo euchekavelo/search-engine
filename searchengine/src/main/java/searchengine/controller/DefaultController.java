@@ -16,11 +16,6 @@ public class DefaultController {
         this.defaultService = defaultService;
     }
 
-    /**
-     * Метод формирует страницу из HTML-файла index.html,
-     * который находится в папке resources/templates.
-     * Это делает библиотека Thymeleaf.
-     */
     @RequestMapping("/")
     public String index(Model model) {
         model.addAttribute("sitePaths", defaultService.getSitePaths());

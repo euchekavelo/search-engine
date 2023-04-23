@@ -14,7 +14,7 @@ public class PageRelevance implements Comparable<PageRelevance> {
     public int compareTo(PageRelevance o) {
         int compare = -Double.compare(this.getRelativePageRelevance(), o.getRelativePageRelevance());
         if (compare == 0) {
-            compare = Integer.compare(this.hashCode(), o.hashCode());
+            compare = Integer.compare(this.page.getId(), o.page.getId());
         }
 
         return compare;
