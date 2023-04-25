@@ -15,7 +15,7 @@ services:
     container_name: search-engine
     build: '.'
     depends_on:
-      - mysql_db
+      - mysql-db
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/search_engine?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true
     ports:
