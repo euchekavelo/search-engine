@@ -29,11 +29,11 @@ The <strong>Search</strong> section provides the ability to search for full matc
 ![](/screenshots/Search.PNG)
 
 ***
-#### Technology stack
+### Technology stack
 Java 17, Spring Boot, Spring Data JPA, Thymeleaf, Lombok, MySQL, JSOUP, Apache Lucene Morphology, Docker.
 
 ***
-####Instructions for running a project locally
+### Instructions for running a project locally
 1. Install and run Docker locally. Instructions can be found on the [official website](https://docs.docker.com/engine/install/).
 2. Download and install Apache Maven. Instructions can be found on the [official website](https://maven.apache.org/index.html).
 3. Clone the repository of this project to the directory of interest.
