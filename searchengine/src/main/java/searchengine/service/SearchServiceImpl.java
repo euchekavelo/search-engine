@@ -62,7 +62,7 @@ public class SearchServiceImpl implements SearchService {
         if (site.equals("All sites")) {
             List<Site> siteList = siteRepository.findSitesByStatusNotIn(statusList);
             if (!siteList.isEmpty()) {
-                throw new ErrorCustomException("Все сайты польностью еще не проиндексированы.");
+                throw new ErrorCustomException("Все сайты полностью еще не проиндексированы.");
             }
 
             lemmaIds = lemmaRepository.findLemmaByLemmaInOrderByFrequencyAsc(setLemmasFromSearchQuery)
