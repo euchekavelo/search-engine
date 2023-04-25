@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import searchengine.dto.ErrorResponse;
 
 @ControllerAdvice
-public class GlobalExceptionHandlerControllerAdvice {
+public class GlobalExceptionHandler {
 
     @ExceptionHandler(ErrorCustomException.class)
     public ResponseEntity<ErrorResponse> handEmptyException(ErrorCustomException ex) {

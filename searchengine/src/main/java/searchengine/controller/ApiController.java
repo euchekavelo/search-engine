@@ -3,14 +3,13 @@ package searchengine.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import searchengine.dto.search.SearchResultsResponse;
 import searchengine.dto.indexing.IndexingResponse;
 import searchengine.dto.statistics.StatisticsResponse;
 import searchengine.exception.ErrorCustomException;
 import searchengine.service.IndexingService;
+import searchengine.service.SearchService;
 import searchengine.service.StatisticsService;
 
 @RestController
@@ -19,11 +18,15 @@ public class ApiController {
 
     private final StatisticsService statisticsService;
     private final IndexingService indexingService;
+    private final SearchService searchService;
 
     @Autowired
-    public ApiController(StatisticsService statisticsService, IndexingService indexingService) {
+    public ApiController(StatisticsService statisticsService, IndexingService indexingService,
+                         SearchService searchService) {
+
         this.statisticsService = statisticsService;
         this.indexingService = indexingService;
+        this.searchService = searchService;
     }
 
     @GetMapping("/statistics")
@@ -44,5 +47,15 @@ public class ApiController {
     @PostMapping("/indexPage")
     public ResponseEntity<IndexingResponse> indexPage(@Param("url") String url) throws ErrorCustomException {
         return ResponseEntity.ok(indexingService.indexPage(url));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<SearchResultsResponse> search(@RequestParam("query") String query,
+                                                        @RequestParam("site") String site,
+                                                        @RequestParam("offset") Integer offset,
+                                                        @RequestParam("limit") Integer limit)
+            throws ErrorCustomException {
+
+        return ResponseEntity.ok(searchService.search(query, site, offset, limit));
     }
 }

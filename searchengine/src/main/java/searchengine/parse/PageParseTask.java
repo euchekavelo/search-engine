@@ -1,14 +1,10 @@
-package searchengine.service.parse;
+package searchengine.parse;
 
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.context.ApplicationContext;
-import org.springframework.transaction.annotation.Transactional;
-import searchengine.config.ConnectionProperties;
-import searchengine.dto.UrlInfoDto;
+import searchengine.dto.UrlInfo;
 import searchengine.model.Page;
 import searchengine.model.Site;
 import searchengine.model.enums.Status;
@@ -30,27 +26,26 @@ public class PageParseTask extends RecursiveAction {
     private static volatile boolean stopFlag;
     private static ApplicationContext applicationContext;
     private final String url;
-    private final Object object = 1;
     private String shortUrl;
     private static SiteRepository siteRepository;
     private static PageService pageService;
     private static LemmaService lemmaService;
     private static List<String> wrongTypes;
     private final Set<PageParseTask> setChildTasks = new HashSet<>();
-    private static final InheritableThreadLocal<AtomicBoolean> isInterrupt = new InheritableThreadLocal<>();
-    private static final InheritableThreadLocal<String> globalPage = new InheritableThreadLocal<>();
-    private static final InheritableThreadLocal<Site> siteEntityThread = new InheritableThreadLocal<>();
+    private static final InheritableThreadLocal<AtomicBoolean> IS_INTERRUPT = new InheritableThreadLocal<>();
+    private static final InheritableThreadLocal<String> GLOBAL_PAGE = new InheritableThreadLocal<>();
+    private static final InheritableThreadLocal<Site> SITE_ENTITY_THREAD = new InheritableThreadLocal<>();
 
     public PageParseTask(Site site, List<String> wrongTypes) {
-        siteEntityThread.set(site);
+        SITE_ENTITY_THREAD.set(site);
         url = site.getUrl();
         shortUrl = "/";
-        globalPage.set(url);
+        GLOBAL_PAGE.set(url);
         siteRepository = applicationContext.getBean(SiteRepository.class);
         pageService = applicationContext.getBean(PageService.class);
         lemmaService = applicationContext.getBean(LemmaService.class);
         PageParseTask.wrongTypes = wrongTypes;
-        PageParseTask.isInterrupt.set(new AtomicBoolean(false));
+        PageParseTask.IS_INTERRUPT.set(new AtomicBoolean(false));
         stopFlag = false;
     }
 
@@ -68,7 +63,7 @@ public class PageParseTask extends RecursiveAction {
 
     public PageParseTask(String url) {
         this.url = url.toLowerCase();
-        shortUrl = url.replace(globalPage.get(), "");
+        shortUrl = url.replace(GLOBAL_PAGE.get(), "");
         if (shortUrl.isEmpty()) {
             shortUrl = "/";
         }
@@ -76,11 +71,12 @@ public class PageParseTask extends RecursiveAction {
 
     @Override
     protected void compute() {
-        if (stopFlag || isInterrupt.get().get()) {
+        if (stopFlag || IS_INTERRUPT.get().get()) {
+            setChildTasks.clear();
             return;
         }
 
-        synchronized (object) {
+        synchronized (siteRepository) {
             getUniqueUrlData();
         }
 
@@ -90,22 +86,19 @@ public class PageParseTask extends RecursiveAction {
     }
 
     private void getUniqueUrlData() {
-        Site site = siteEntityThread.get();
+        Site site = SITE_ENTITY_THREAD.get();
         Optional<Page> optionalPageEntity = pageService.getPageByPathAndSite(shortUrl, site);
         if (optionalPageEntity.isPresent()) {
             return;
         }
 
         try {
-            UrlInfoDto urlInfoDto = pageService.getUrlInfoDto(url);
-            int codeStatus = urlInfoDto.getCodeStatus();
-            if (codeStatus >= 400 && codeStatus <= 599) {
-                return;
-            }
-            Document document = urlInfoDto.getDocument();
+            UrlInfo urlInfo = pageService.getUrlInfoDto(url);
+            int codeStatus = urlInfo.getCodeStatus();
+            Document document = urlInfo.getDocument();
             if (document != null) {
-                Page page = savePageEntityAndUpdateSiteStatusTime(site, shortUrl, urlInfoDto);
-                lemmaService.saveLemmasAndIndexes(urlInfoDto.getDocument().html(), site, page);
+                Page page = savePageEntityAndUpdateSiteStatusTime(site, shortUrl, urlInfo);
+                saveLemmasAndIndexes(codeStatus, urlInfo, site, page);
                 Elements elements = document.select("a");
                 fillSetChildTasks(setChildTasks, elements);
             }
@@ -114,12 +107,18 @@ public class PageParseTask extends RecursiveAction {
         }
     }
 
+    private void saveLemmasAndIndexes(int codeStatus, UrlInfo urlInfo, Site site, Page page) {
+        if (codeStatus < 400) {
+            lemmaService.saveLemmasAndIndexes(urlInfo.getDocument().html(), site, page);
+        }
+    }
+
     private void fixIndexingError(Site site, IOException ex) {
         site.setLastError("Ошибка индексации: " + ex.getMessage() + " - " + url);
         site.setStatus(Status.FAILED);
         siteRepository.save(site);
 
-        isInterrupt.set(new AtomicBoolean(true));
+        IS_INTERRUPT.set(new AtomicBoolean(true));
     }
 
     private void fillSetChildTasks(Set<PageParseTask> setChildTasks, Elements elements) {
@@ -127,7 +126,7 @@ public class PageParseTask extends RecursiveAction {
             String link = element.absUrl("href");
 
             if (link.startsWith("/")) {
-                link = globalPage.get().concat(link);
+                link = GLOBAL_PAGE.get().concat(link);
             }
 
             if (isCorrectLink(link)) {
@@ -138,8 +137,8 @@ public class PageParseTask extends RecursiveAction {
         }
     }
 
-    private Page savePageEntityAndUpdateSiteStatusTime(Site site, String link, UrlInfoDto urlInfoDto) {
-        Page page = pageService.savePageEntity(site, link, urlInfoDto);
+    private Page savePageEntityAndUpdateSiteStatusTime(Site site, String link, UrlInfo urlInfo) {
+        Page page = pageService.savePageEntity(site, link, urlInfo);
         site.setStatusTime(LocalDateTime.now());
         siteRepository.save(site);
 
@@ -147,7 +146,7 @@ public class PageParseTask extends RecursiveAction {
     }
 
     private boolean isCorrectLink(String link) {
-        return !link.isEmpty() && link.startsWith(globalPage.get())
+        return !link.isEmpty() && link.startsWith(GLOBAL_PAGE.get())
                 && !link.contains("#") && !link.contains("@")
                 && !wrongTypes.contains(link.substring(link.lastIndexOf(".") + 1));
     }

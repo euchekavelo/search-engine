@@ -16,16 +16,10 @@ spring:
 
 indexing-settings:
   siteConfigs:
-#    - url: https://www.lenta.ru
-#      name: Лента.ру
-#    - url: https://skillbox.ru
-#      name: Skillbox
     - url: https://www.playback.ru
-      name: PlayBack.Ru
-    - url: https://www.lutherancathedral.ru
-      name: lutherancathedral
-#    - url: https://lenta.ru
-#      name: lenta.ru
+      name: Плейбек.ру
+    - url: https://pcworkshop.ru
+      name: ПКВоркШоп.ру
 
 
 jsoup-connection-properties:

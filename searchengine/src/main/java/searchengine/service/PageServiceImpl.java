@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.springframework.stereotype.Service;
-import searchengine.config.ConnectionProperties;
-import searchengine.dto.UrlInfoDto;
+import searchengine.config.ConnectionPropertiesConfig;
+import searchengine.dto.UrlInfo;
 import searchengine.model.Page;
 import searchengine.model.Site;
 import searchengine.repository.PageRepository;
@@ -18,33 +18,33 @@ import java.util.Optional;
 public class PageServiceImpl implements PageService {
 
     private final PageRepository pageRepository;
-    private final ConnectionProperties connectionProperties;
+    private final ConnectionPropertiesConfig connectionPropertiesConfig;
 
     @Override
-    public Page savePageEntity(Site site, String link, UrlInfoDto urlInfoDto) {
+    public Page savePageEntity(Site site, String link, UrlInfo urlInfo) {
         Page page = new Page();
-        page.setCode(urlInfoDto.getCodeStatus());
+        page.setCode(urlInfo.getCodeStatus());
         page.setSite(site);
         page.setPath(link);
-        page.setContent(urlInfoDto.getDocument().html());
+        page.setContent(urlInfo.getDocument().html());
         pageRepository.save(page);
 
         return page;
     }
 
     @Override
-    public UrlInfoDto getUrlInfoDto(String url) throws IOException {
-        UrlInfoDto urlInfoDto = new UrlInfoDto();
+    public UrlInfo getUrlInfoDto(String url) throws IOException {
+        UrlInfo urlInfo = new UrlInfo();
         Connection.Response response = Jsoup.connect(url)
-                .userAgent(connectionProperties.getUserAgent())
-                .referrer(connectionProperties.getReferer())
+                .userAgent(connectionPropertiesConfig.getUserAgent())
+                .referrer(connectionPropertiesConfig.getReferer())
                 .ignoreHttpErrors(true)
                 .execute();
 
-        urlInfoDto.setCodeStatus(response.statusCode());
-        urlInfoDto.setDocument(response.parse());
+        urlInfo.setCodeStatus(response.statusCode());
+        urlInfo.setDocument(response.parse());
 
-        return urlInfoDto;
+        return urlInfo;
     }
 
     @Override
@@ -55,10 +55,5 @@ public class PageServiceImpl implements PageService {
     @Override
     public Optional<Page> getPageByPathAndSite(String path, Site site) {
         return pageRepository.findPageByPathAndSite(path, site);
-    }
-
-    @Override
-    public void deleteAll() {
-        pageRepository.deleteAll();
     }
 }

@@ -2,8 +2,6 @@ package searchengine.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import searchengine.config.SiteConfig;
-import searchengine.config.SitesListConfig;
 import searchengine.dto.statistics.DetailedStatisticsItem;
 import searchengine.dto.statistics.StatisticsData;
 import searchengine.dto.statistics.StatisticsResponse;
@@ -12,10 +10,8 @@ import searchengine.model.Site;
 import searchengine.repository.SiteRepository;
 
 import java.time.ZoneId;
-import java.time.temporal.TemporalField;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +43,10 @@ public class StatisticsServiceImpl implements StatisticsService {
             detailed.add(detailedStatisticsItem);
         }
 
+        return getStatisticsResponse(total, detailed);
+    }
+
+    private StatisticsResponse getStatisticsResponse(TotalStatistics total, List<DetailedStatisticsItem> detailed) {
         StatisticsResponse response = new StatisticsResponse();
         StatisticsData data = new StatisticsData();
         data.setTotal(total);
