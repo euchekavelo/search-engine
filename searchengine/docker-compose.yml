@@ -1,9 +1,9 @@
 version: '3'
 
 services:
-  mysql:
+  mysql-db:
     image: mysql:latest
-    container_name: mysql
+    container_name: mysql-db
     environment:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_DATABASE=search_engine
@@ -13,9 +13,11 @@ services:
 
   search-engine:
     container_name: search-engine
-    image: search-engine:latest
     build: '.'
+    depends_on:
+      - mysql_db
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:8081/search_engine?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/search_engine?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true
     ports:
       - "8080:8080"
+    restart: on-failure
