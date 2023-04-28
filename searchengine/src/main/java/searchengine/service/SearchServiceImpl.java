@@ -68,7 +68,7 @@ public class SearchServiceImpl implements SearchService {
             lemmaIds = lemmaRepository.findLemmaByLemmaInOrderByFrequencyAsc(setLemmasFromSearchQuery)
                     .stream()
                     .map(Lemma::getId)
-                    .toList();;
+                    .toList();
         } else {
             Optional<Site> optionalSite = siteRepository.findSiteByUrlAndStatusIn(site, statusList);
             if (optionalSite.isEmpty()) {

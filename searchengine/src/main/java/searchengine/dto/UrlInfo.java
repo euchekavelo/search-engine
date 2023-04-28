@@ -6,6 +6,6 @@ import org.jsoup.nodes.Document;
 @Data
 public class UrlInfo {
 
-    private int CodeStatus;
+    private int codeStatus;
     private Document document;
 }
