@@ -4,21 +4,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
-import searchengine.service.DefaultService;
+import searchengine.service.SiteService;
 
 @Controller
 public class DefaultController {
 
-    private final DefaultService defaultService;
+    private final SiteService siteService;
 
     @Autowired
-    public DefaultController(DefaultService defaultService) {
-        this.defaultService = defaultService;
+    public DefaultController(SiteService siteService) {
+        this.siteService = siteService;
     }
 
     @RequestMapping("/")
     public String index(Model model) {
-        model.addAttribute("sitePaths", defaultService.getSitePaths());
+        model.addAttribute("sitePaths", siteService.getSitePaths());
         return "index";
     }
 }

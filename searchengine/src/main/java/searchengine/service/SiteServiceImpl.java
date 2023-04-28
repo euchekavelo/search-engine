@@ -9,7 +9,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class DefaultServiceImpl implements DefaultService {
+public class SiteServiceImpl implements SiteService {
 
     private final SitesListConfig sitesListConfig;
 
