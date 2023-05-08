@@ -7,5 +7,5 @@
 /dataSources/
 /dataSources.local.xml
 
-./searchengine/target/
-./searchengine/.idea/
+/searchengine/target/
+/searchengine/.idea/
