@@ -90,7 +90,9 @@ public class IndexingServiceImpl implements IndexingService {
 
             UrlInfo urlInfo = pageService.getUrlInfoDto(url);
             Page page = pageService.savePageEntity(site, shortUrl, urlInfo);
-            lemmaService.saveLemmasAndIndexes(urlInfo.getDocument().html(), site, page);
+            if (urlInfo.getCodeStatus() < 400) {
+                lemmaService.saveLemmasAndIndexes(urlInfo.getDocument().html(), site, page);
+            }
 
         } catch (IOException e) {
             throw new ErrorCustomException("При попытке получения данных страницы произошла ошибка: " + e.getMessage());
